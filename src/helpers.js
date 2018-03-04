@@ -2,6 +2,16 @@ export function callIfExists(func, ...args) {
     return (typeof func === 'function') && func(...args);
 }
 
+export function copyExcludingKeys(obj, keysToExclude) {
+    const copy = {};
+    for (const key in obj) {
+        if (!keysToExclude.includes(key)) {
+            copy[key] = obj[key];
+        }
+    }
+    return copy;
+}
+
 export function hasOwnProp(obj, prop) {
     return Object.prototype.hasOwnProperty.call(obj, prop);
 }

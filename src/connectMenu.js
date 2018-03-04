@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 
 import ContextMenuTrigger from './ContextMenuTrigger';
 import listener from './globalEventListener';
+import { copyExcludingKeys } from './helpers';
 
 // collect ContextMenuTrigger's expected props to NOT pass them on as part of the context
-const ignoredTriggerProps = [...Object.keys(ContextMenuTrigger.propTypes), 'children'];
+const ignoredTriggerProps = Object.keys(ContextMenuTrigger.propTypes);
 
 // expect the id of the menu to be responsible for as outer parameter
 export default function (menuId) {
@@ -15,7 +16,7 @@ export default function (menuId) {
         return class ConnectMenu extends Component {
             constructor(props) {
                 super(props);
-                this.state = { trigger: null };
+                this.state = { target: null, trigger: null };
             }
 
             componentDidMount() {
@@ -29,27 +30,26 @@ export default function (menuId) {
             }
 
             handleShow = (e) => {
-                if (e.detail.id !== menuId) return;
-
-                // the onShow event's detail.data object holds all ContextMenuTrigger props
-                const { data } = e.detail;
-                const filteredData = {};
-
-                for (const key in data) {
-                    // exclude props the ContextMenuTrigger is expecting itself
-                    if (!ignoredTriggerProps.includes(key)) {
-                        filteredData[key] = data[key];
-                    }
+                if (e.detail.id === menuId) {
+                    const target = e.detail.target;
+                    // the onShow event's detail.data object holds all ContextMenuTrigger props
+                    const trigger = copyExcludingKeys(e.detail.data, ignoredTriggerProps);
+                    this.setState({ target, trigger });
                 }
-                this.setState({ trigger: filteredData });
             }
 
             handleHide = () => {
-                this.setState({ trigger: null });
+                this.setState({ target: null, trigger: null });
             }
 
             render() {
-                return <Child {...this.props} id={menuId} trigger={this.state.trigger} />;
+                return (
+                    <Child
+                        {...this.props}
+                        id={menuId}
+                        target={this.state.target}
+                        trigger={this.state.trigger} />
+                );
             }
         };
     };
